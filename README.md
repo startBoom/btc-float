@@ -2,6 +2,12 @@
 
 Windows 桌面上的轻量 BTC 行情浮窗，使用 Electron、Vue 3、TypeScript 和 Vite。
 
+## 安装 Windows 版
+
+下载并双击 `BTC-Float-0.1.0-x64-Setup.exe`。安装到当前 Windows 用户后，可通过桌面或开始菜单中的「BTC Float」启动。安装版自带 Electron，无需安装 Node.js。当前安装包未签名，Windows SmartScreen 可能显示发布者提示。
+
+在 Windows「设置 → 应用 → 已安装的应用」中卸载。卸载会删除快捷方式和安装版的登录启动项，并保留行情浮窗偏好，方便重装后继续使用。
+
 ## 运行开发版
 
 在 Windows 上安装 Node.js 22.12 或更高版本，在项目目录运行：
@@ -39,7 +45,16 @@ npm run build
 npm start
 ```
 
-构建命令先检查 TypeScript 和 Vue 类型，再生成 `out/` 目录。`npm start` 在本机运行构建结果。Windows 安装包安排在第六阶段。
+构建命令先检查 TypeScript 和 Vue 类型，再生成 `out/` 目录。`npm start` 在本机运行构建结果。
+
+在 Windows x64 上生成安装包：
+
+```powershell
+npm ci
+npm run dist:win
+```
+
+安装包生成在 `release/`，文件名包含应用版本和架构。首次打包需联网下载 Electron 和 NSIS 构建工具。
 
 ## 代码入口
 

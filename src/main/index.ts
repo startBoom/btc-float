@@ -208,6 +208,8 @@ async function createPanel(): Promise<void> {
   await loadRenderer(win);
 }
 
+if (process.platform === 'win32' && app.isPackaged) app.setAppUserModelId('com.startboom.btcfloat');
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
