@@ -20,7 +20,7 @@ function render() {
   const last = props.rows.at(-1)
   const reset = displayedInterval !== props.interval
   if (reset) positioned = false
-  const tailIndex = props.rows.findIndex(bar => bar.time === lastTime)
+  const tailIndex = last?.time === lastTime ? props.rows.length - 1 : props.rows.findIndex(bar => bar.time === lastTime)
   if (reset || lastRevision !== props.revision || appended >= 120 || tailIndex < 0) {
     series.setData(props.rows.map(point))
     // 只在首次有数据或切换周期时定位，盘中更新保留用户的缩放与浏览位置。
@@ -31,7 +31,7 @@ function render() {
     appended = 0
   } else {
     // Vue 可能合并多次行情更新，按顺序补上所有新蜡烛。
-    for (const bar of props.rows.slice(tailIndex)) series.update(point(bar))
+    for (let index = tailIndex; index < props.rows.length; index++) series.update(point(props.rows[index]))
     appended += props.rows.length - tailIndex - 1
   }
   lastTime = last?.time ?? 0

@@ -52,6 +52,7 @@ button:focus-visible { outline: 1px solid #9faab5; outline-offset: -2px; }
 }
 .summary { display: grid; gap: 1px; text-align: right; }
 .status { color: #949ca4; }
+.status.warning { color: #c4ad8c; }
 
 .close {
   position: absolute;
@@ -97,6 +98,7 @@ button:focus-visible { outline: 1px solid #9faab5; outline-offset: -2px; }
   gap: 8px;
 }
 .detail-controls { font-size: 10px; }
+.detail-controls .status { -webkit-app-region: no-drag; }
 .detail button {
   border: 0;
   background: transparent;
@@ -119,7 +121,12 @@ button:focus-visible { outline: 1px solid #9faab5; outline-offset: -2px; }
   position: absolute; inset: 0; justify-content: center;
   color: #a3acb4; font-size: 11px; pointer-events: none;
 }
-.plot-status.inline { inset: 3px auto auto 10px; background: #191d22; }
+.plot-status.inline {
+  inset: 4px auto auto 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #22282f;
+}
 .plot-status button { pointer-events: auto; text-decoration: underline; }
 .periods { padding: 5px 10px; gap: 4px; font-size: 11px; }
 .periods button { padding: 4px 10px; }

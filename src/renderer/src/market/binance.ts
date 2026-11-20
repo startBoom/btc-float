@@ -93,6 +93,7 @@ export const binance: MarketSource = {
     socket.onerror = socket.onclose = onDisconnect
     return {
       setInterval(interval) {
+        if (wanted === interval) return
         wanted = interval
         window.clearTimeout(timer)
         timer = window.setTimeout(syncSubscription, 250)

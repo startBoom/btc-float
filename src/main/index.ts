@@ -3,6 +3,7 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  powerMonitor,
   screen,
   shell,
   type Rectangle,
@@ -14,8 +15,10 @@ import {
   getPanelStateChannel,
   getSettingsChannel,
   moveWindowChannel,
+  panelActivityChannel,
   settingsChangedChannel,
   updateSettingsChannel,
+  type PanelActivity,
 } from '../shared/window';
 import type { FloatPreferences } from '../shared/settings';
 import { createSettingsStore } from './settings';
@@ -30,6 +33,10 @@ let settingsWindow: BrowserWindow | null = null;
 let settings: ReturnType<typeof createSettingsStore>;
 let tray: ReturnType<typeof createTray>;
 let quitting = false;
+
+function sendPanelActivity(activity: PanelActivity): void {
+  if (panel && !panel.webContents.isDestroyed()) panel.webContents.send(panelActivityChannel, activity);
+}
 
 function applyPreferences(preferences: FloatPreferences): void {
   panel?.setAlwaysOnTop(preferences.alwaysOnTop, 'pop-up-menu');
@@ -186,8 +193,14 @@ async function createPanel(): Promise<void> {
     event.preventDefault();
     win.hide();
   });
-  win.on('show', () => tray.refresh(settings.get()));
-  win.on('hide', () => tray.refresh(settings.get()));
+  win.on('show', () => {
+    sendPanelActivity('shown');
+    tray.refresh(settings.get());
+  });
+  win.on('hide', () => {
+    sendPanelActivity('hidden');
+    tray.refresh(settings.get());
+  });
   win.once('closed', () => {
     panel = null;
   });
@@ -230,7 +243,7 @@ if (!app.requestSingleInstanceLock()) {
       ipcMain.handle(getPanelStateChannel, (event) => {
         if (!panel || event.senderFrame !== panel.webContents.mainFrame)
           throw new Error('无权读取浮窗状态');
-        return { expanded: Boolean(compactBounds), interval: settings.get().interval };
+        return { expanded: Boolean(compactBounds), visible: panel.isVisible(), interval: settings.get().interval };
       });
       ipcMain.handle(getSettingsChannel, (event) => {
         if (!settingsWindow || event.senderFrame !== settingsWindow.webContents.mainFrame)
@@ -276,6 +289,7 @@ if (!app.requestSingleInstanceLock()) {
       });
       screen.on('display-removed', keepPanelVisible);
       screen.on('display-metrics-changed', keepPanelVisible);
+      powerMonitor.on('resume', () => sendPanelActivity('resume'));
       await createPanel();
     })
     .catch((error: unknown) => {

@@ -26,9 +26,9 @@ npm run dev
 
 ## 行情连接
 
-启动时通过 REST 获取首笔报价和所设周期最近 120 根 K 线。未保存周期设置时使用 15 分钟（15m）。报价通过 WebSocket 持续更新。展开后通过同一条连接订阅所选周期的实时蜡烛，切换周期时同步对应的历史数据，收起后取消蜡烛订阅。图表时间为 UTC，使用 [TradingView Lightweight Charts™](https://www.tradingview.com/lightweight-charts/) 绘制。
+启动时通过 REST 获取首笔报价和所设周期最近 120 根 K 线。未保存周期设置时使用 15 分钟（15m）。报价通过 WebSocket 持续更新。展开后通过同一条连接订阅所选周期的实时 K 线，切换周期时同步对应的历史数据。收起或隐藏到托盘时取消 K 线订阅并释放图表，恢复显示后补齐数据。图表时间为 UTC，使用 [TradingView Lightweight Charts™](https://www.tradingview.com/lightweight-charts/) 绘制。
 
-首次取得有效报价前显示横线。断线后保留最近报价并显示连接状态，重连间隔从 1 秒逐步增加至 30 秒。推送超过 10 秒未更新会显示「行情延迟」，连续 30 秒无有效推送会重建连接。网络恢复时自动同步。推送不可用期间，每 30 秒尝试刷新一次 REST 报价。
+首次取得有效报价前显示横线。断线后保留最近报价，展开详情后可查看最近报价时间。报价与 K 线各自超过 10 秒未更新会提示延迟，连续 30 秒未收到所需数据会重建连接。自动重连采用约 1 秒至 30 秒的指数退避和随机抖动。网络恢复或 Windows 从睡眠唤醒时自动同步，也可在详情中手动重连。推送不可用期间，每隔 30 秒尝试用 REST 补充缺失数据。
 
 如果持续显示「重连中」，可用浏览器打开 [BTCUSDT 公开报价](https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=BTCUSDT) 检查 REST 连通性。实时更新还需要当前网络能够连接 `wss://fstream.binance.com`；桌面应用默认使用 Windows 系统网络设置。
 

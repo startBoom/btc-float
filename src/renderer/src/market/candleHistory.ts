@@ -31,6 +31,7 @@ export function createCandleHistory(source: MarketSource, initialInterval: Inter
     try {
       const history = await source.getCandles(interval.value, controller.signal)
       if (controller.signal.aborted) return
+      if (!history.length) throw new Error('历史 K 线为空')
       // 请求期间可能跨过一根或多根 K 线。按开盘时间合并，以最新推送更新尾部。
       const combined = new Map(history.map(row => [row.time, row]))
       for (const [time, bar] of pending) {
@@ -55,7 +56,6 @@ export function createCandleHistory(source: MarketSource, initialInterval: Inter
     rows.value = []
     latestEvent = 0
     revision.value++
-    void load()
   }
 
   function update(period: Interval, bar: Candle, eventTime: number) {
@@ -63,6 +63,8 @@ export function createCandleHistory(source: MarketSource, initialInterval: Inter
     if (period !== interval.value || eventTime < latestEvent || (last && last.time > bar.time) || fewerTrades(bar, last)) return
     latestEvent = eventTime
     if (request) pending.set(bar.time, bar)
+    if (last?.time === bar.time && last.open === bar.open && last.high === bar.high
+      && last.low === bar.low && last.close === bar.close && last.trades === bar.trades) return
     const keep = last?.time === bar.time ? rows.value.slice(0, -1) : rows.value.slice(-119)
     rows.value = [...keep, bar]
   }
