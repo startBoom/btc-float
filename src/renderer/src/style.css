@@ -1,0 +1,126 @@
+:root {
+  --rise: #bc9395;
+  --fall: #84a698;
+  font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #a3aab1;
+  background: transparent;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+/* 原生窗口为跨屏缩放保留高度，可见面板贴底，便于放进任务栏。 */
+#app { display: grid; align-content: end; }
+
+.widget {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(23, 27, 32, .94);
+  user-select: none;
+}
+
+.compact-trigger {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: inherit;
+  cursor: pointer;
+  touch-action: none;
+}
+button:focus-visible { outline: 1px solid #9faab5; outline-offset: -2px; }
+
+.symbol, .summary { font-size: 10px; line-height: 13px; }
+.symbol { display: flex; gap: 4px; align-items: baseline; }
+.symbol strong { letter-spacing: .5px; }
+.symbol span, .change { color: #89929b; }
+.price { font-size: 14px; line-height: 17px; font-weight: 600; }
+.change.up { color: var(--rise); }
+.change.down { color: var(--fall); }
+@media (prefers-reduced-motion: no-preference) {
+  .price.up { animation: tick-up 420ms ease-out; }
+  .price.down { animation: tick-down 420ms ease-out; }
+  @keyframes tick-up { from { color: var(--rise); } }
+  @keyframes tick-down { from { color: var(--fall); } }
+  .detail, .widget { animation: panel-in 130ms ease-out; }
+  @keyframes panel-in { from { opacity: .6; transform: translateY(2px); } }
+}
+.summary { display: grid; gap: 1px; text-align: right; }
+.status { color: #949ca4; }
+
+.close {
+  position: absolute;
+  top: 1px;
+  right: 5px;
+  width: 24px;
+  height: 17px;
+  border: 0;
+  border-radius: 5px;
+  color: inherit;
+  background: #343b43;
+  font-size: 16px;
+  line-height: 15px;
+  cursor: pointer;
+  opacity: 0;
+  -webkit-app-region: no-drag;
+}
+.widget:hover .close, .close:focus-visible { opacity: 1; }
+.widget:hover .status, .widget:focus-within .status { visibility: hidden; }
+
+.detail {
+  display: grid;
+  height: 100vh;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 11px;
+  background: #191d22;
+  color: #bfc6cd;
+  user-select: none;
+}
+.detail-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  align-items: center;
+  padding: 9px 13px 7px;
+  -webkit-app-region: drag;
+}
+.detail .symbol { font-size: 12px; }
+.detail-controls, .detail-quote, .extremes, .periods, .plot-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.detail-controls { font-size: 10px; }
+.detail button {
+  border: 0;
+  background: transparent;
+  color: #a6afb8;
+  font: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.detail button:hover, .periods button[aria-pressed="true"] { background: #333b43; color: #e0e4e8; }
+.detail-controls button { padding: 3px 6px; }
+.detail-quote, .extremes { grid-column: 1 / -1; }
+.detail-quote .price { font-size: 20px; line-height: 25px; }
+.detail-quote .change { font-size: 11px; }
+.extremes { gap: 16px; color: #929ca5; font-size: 10px; }
+.extremes b { margin-left: 2px; color: #bac2ca; font-weight: 500; }
+.plot { position: relative; min-height: 0; }
+.chart-host { position: absolute; inset: 0; }
+.plot-status {
+  position: absolute; inset: 0; justify-content: center;
+  color: #a3acb4; font-size: 11px; pointer-events: none;
+}
+.plot-status.inline { inset: 3px auto auto 10px; background: #191d22; }
+.plot-status button { pointer-events: auto; text-decoration: underline; }
+.periods { padding: 5px 10px; gap: 4px; font-size: 11px; }
+.periods button { padding: 4px 10px; }
+.periods > span { margin-left: auto; color: #89929b; font-size: 10px; }
