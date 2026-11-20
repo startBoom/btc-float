@@ -2,12 +2,12 @@
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import CompactTrigger from './CompactTrigger.vue'
 import { useMarket } from './market/useMarket'
-import type { Interval } from './market/source'
+import { intervals, type Interval } from '../../shared/settings'
 
 const CandleChart = defineAsyncComponent(() => import('./CandleChart.vue'))
-const periods: Interval[] = ['1m', '5m', '15m', '1h']
-const expanded = ref(false)
-const { quote, history, status } = useMarket(expanded)
+const props = defineProps<{ initialExpanded: boolean; initialInterval: Interval }>()
+const expanded = ref(props.initialExpanded)
+const { quote, history, status } = useMarket(expanded, props.initialInterval)
 const { interval, rows, state, revision } = history
 const currentBar = computed(() => rows.value.at(-1))
 let resizing = false
@@ -23,7 +23,6 @@ function escape(event: KeyboardEvent) {
   if (expanded.value && event.key === 'Escape') void resize(false)
 }
 onMounted(() => {
-  void resize(false)
   window.addEventListener('keydown', escape)
 })
 onUnmounted(() => window.removeEventListener('keydown', escape))
@@ -62,7 +61,7 @@ function closeWindow(): void {
       <span class="change" :class="changeDirection" :aria-label="'24 小时涨跌幅 ' + change">{{ change }}</span>
     </div>
     <CompactTrigger @expand="resize(true)" />
-    <button class="close" type="button" aria-label="关闭浮窗" title="关闭浮窗" @click="closeWindow">×</button>
+    <button class="close" type="button" aria-label="隐藏浮窗" title="隐藏到系统托盘" @click="closeWindow">×</button>
   </main>
   <main v-else class="detail" aria-label="BTC 行情详情">
     <header class="detail-head">
@@ -88,7 +87,7 @@ function closeWindow(): void {
       </div>
     </section>
     <footer class="periods" aria-label="K 线周期">
-      <button v-for="period in periods" :key="period" type="button" :aria-pressed="period === interval"
+      <button v-for="period in intervals" :key="period" type="button" :aria-pressed="period === interval"
         @click="history.select(period)">{{ period }}</button>
       <span title="图表时间使用协调世界时">UTC</span>
     </footer>

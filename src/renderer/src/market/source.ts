@@ -1,10 +1,11 @@
+import type { Interval } from '../../../shared/settings'
+export type { Interval } from '../../../shared/settings'
+
 export interface Quote {
   price: number
   changePercent: number
   time: number // Unix 毫秒，来自交易所
 }
-
-export type Interval = '1m' | '5m' | '15m' | '1h'
 
 export interface Candle {
   time: number // 开盘时间，Unix 秒

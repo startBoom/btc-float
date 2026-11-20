@@ -6,8 +6,8 @@ function fewerTrades(bar: Candle, previous?: Candle) {
     && bar.trades < previous.trades
 }
 
-export function createCandleHistory(source: MarketSource) {
-  const interval = ref<Interval>('1m')
+export function createCandleHistory(source: MarketSource, initialInterval: Interval) {
+  const interval = ref(initialInterval)
   const rows = shallowRef<Candle[]>([])
   const revision = ref(0)
   const state = ref<'loading' | 'ready' | 'error'>('loading')
@@ -22,7 +22,7 @@ export function createCandleHistory(source: MarketSource) {
   }
 
   async function load() {
-    cancel()
+    if (request) return
     const controller = new AbortController()
     request = controller
     const tail = rows.value.at(-1)
@@ -50,6 +50,7 @@ export function createCandleHistory(source: MarketSource) {
 
   function select(value: Interval) {
     if (interval.value === value) return
+    cancel()
     interval.value = value
     rows.value = []
     latestEvent = 0

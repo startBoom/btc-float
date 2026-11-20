@@ -1,15 +1,15 @@
 import { onMounted, onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
 import { binance } from './binance'
 import { createCandleHistory } from './candleHistory'
-import type { MarketSource, MarketStream, Quote } from './source'
+import type { Interval, MarketSource, MarketStream, Quote } from './source'
 
 type Status = 'connecting' | 'live' | 'delayed' | 'reconnecting' | 'offline'
 const staleAfter = 10_000
 const retryAfterSilence = 30_000
 
-export function useMarket(expanded: Ref<boolean>, source: MarketSource = binance) {
+export function useMarket(expanded: Ref<boolean>, initialInterval: Interval, source: MarketSource = binance) {
   const quote = shallowRef<Quote | null>(null)
-  const history = createCandleHistory(source)
+  const history = createCandleHistory(source, initialInterval)
   const status = ref<Status>('connecting')
   let stream: MarketStream | undefined
   let retry: number | undefined
