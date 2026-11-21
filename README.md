@@ -4,7 +4,7 @@ Windows 桌面上的轻量 BTC 行情浮窗，使用 Electron、Vue 3、TypeScri
 
 ## 安装 Windows 版
 
-下载并双击 `BTC-Float-0.1.0-x64-Setup.exe`。安装到当前 Windows 用户后，可通过桌面或开始菜单中的「BTC Float」启动。安装版自带 Electron，无需安装 Node.js。当前安装包未签名，Windows SmartScreen 可能显示发布者提示。
+下载并双击 `BTC-Float-0.1.0-x64-Setup.exe`。在安装向导的「选定安装位置」页面，可以点击「浏览」或直接输入目标文件夹，例如 `D:\Apps\BTC Float`，也可以保留默认位置。安装后可通过桌面或开始菜单中的「BTC Float」启动。安装版自带 Electron，无需安装 Node.js。当前安装包未签名，Windows SmartScreen 可能显示发布者提示。
 
 在 Windows「设置 → 应用 → 已安装的应用」中卸载。卸载会删除快捷方式和安装版的登录启动项，并保留行情浮窗偏好，方便重装后继续使用。
 
