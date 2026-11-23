@@ -54,7 +54,9 @@ npm ci
 npm run dist:win
 ```
 
-安装包生成在 `release/`，文件名包含应用版本和架构。首次打包需联网下载 Electron 和 NSIS 构建工具。
+安装包生成在 `release/`，文件名包含应用版本和架构。首次打包通过 `electron-builder.env` 配置的 npmmirror HTTPS 镜像下载 Electron 和 Windows 打包工具。electron-builder 会按内置校验值验证工具包，并在后续构建中复用缓存。
+
+打包使用独立的临时目录，即使旧的 `release/win-unpacked` 正在运行也可以重新打包。若同名安装程序正在打开，请先关闭安装向导，再重新打包。
 
 ## 代码入口
 

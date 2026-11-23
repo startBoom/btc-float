@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && vue-tsc --noEmit -p tsconfig.web.json",
     "build": "npm run typecheck && electron-vite build",
     "start": "electron .",
-    "dist:win": "npm run build && electron-builder --win --x64 --publish never"
+    "dist:win": "npm run build && node build/dist-win.cjs"
   },
   "dependencies": {
     "lightweight-charts": "^5.3.0",
