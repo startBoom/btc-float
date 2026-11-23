@@ -282,12 +282,20 @@ if (!app.requestSingleInstanceLock()) {
           !Number.isFinite(y) ||
           x < 0 ||
           y < 0 ||
-          x > panelSize.width ||
-          y > panelSize.height
+          x > 1 ||
+          y > 1
         )
           return;
         const cursor = screen.getCursorScreenPoint();
-        panel.setPosition(Math.round(cursor.x - x), Math.round(cursor.y - y));
+        const target = {
+          ...panelSize,
+          x: Math.round(cursor.x - x * panelSize.width),
+          y: Math.round(cursor.y - y * panelSize.height),
+        };
+        // 跨 DPI 时 setPosition 会沿用当前窗口尺寸并重新换算。用目标屏幕的
+        // 逻辑坐标一次设置位置和固定尺寸，同时保留任务栏内的落点。
+        const display = screen.getDisplayNearestPoint(cursor);
+        panel.setBounds(fitBounds(target, display.bounds));
       });
       screen.on('display-removed', keepPanelVisible);
       screen.on('display-metrics-changed', keepPanelVisible);

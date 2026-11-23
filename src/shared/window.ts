@@ -14,7 +14,7 @@ export type PanelActivity = 'shown' | 'hidden' | 'resume'
 export interface FloatWindowApi {
   close(): void
   setExpanded(expanded: boolean): Promise<boolean>
-  dragFrom(offsetX: number, offsetY: number): void
+  dragFrom(relativeX: number, relativeY: number): void
   getPanelState(): Promise<{ expanded: boolean; visible: boolean; interval: FloatPreferences['interval'] }>
   onPanelActivity(listener: (activity: PanelActivity) => void): () => void
   getSettings(): Promise<FloatSettings>
