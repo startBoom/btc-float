@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, type Ref } from 'vue'
 import type { Candle, Interval, MarketSource } from './source'
 
 function fewerTrades(bar: Candle, previous?: Candle) {
@@ -6,7 +6,7 @@ function fewerTrades(bar: Candle, previous?: Candle) {
     && bar.trades < previous.trades
 }
 
-export function createCandleHistory(source: MarketSource, initialInterval: Interval) {
+export function createCandleHistory(source: Readonly<Ref<MarketSource>>, initialInterval: Interval) {
   const interval = ref(initialInterval)
   const rows = shallowRef<Candle[]>([])
   const revision = ref(0)
@@ -29,7 +29,7 @@ export function createCandleHistory(source: MarketSource, initialInterval: Inter
     if (tail) pending.set(tail.time, tail)
     state.value = 'loading'
     try {
-      const history = await source.getCandles(interval.value, controller.signal)
+      const history = await source.value.getCandles(interval.value, controller.signal)
       if (controller.signal.aborted) return
       if (!history.length) throw new Error('历史 K 线为空')
       // 请求期间可能跨过一根或多根 K 线。按开盘时间合并，以最新推送更新尾部。
@@ -49,13 +49,18 @@ export function createCandleHistory(source: MarketSource, initialInterval: Inter
     }
   }
 
-  function select(value: Interval) {
-    if (interval.value === value) return
+  function reset() {
     cancel()
-    interval.value = value
     rows.value = []
     latestEvent = 0
+    state.value = 'loading'
     revision.value++
+  }
+
+  function select(value: Interval) {
+    if (interval.value === value) return
+    reset()
+    interval.value = value
   }
 
   function update(period: Interval, bar: Candle, eventTime: number) {
@@ -68,5 +73,5 @@ export function createCandleHistory(source: MarketSource, initialInterval: Inter
     const keep = last?.time === bar.time ? rows.value.slice(0, -1) : rows.value.slice(-119)
     rows.value = [...keep, bar]
   }
-  return { interval, rows, revision, state, load, select, update, cancel }
+  return { interval, rows, revision, state, load, select, update, cancel, reset }
 }

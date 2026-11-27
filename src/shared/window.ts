@@ -15,7 +15,7 @@ export interface FloatWindowApi {
   close(): void
   setExpanded(expanded: boolean): Promise<boolean>
   dragFrom(relativeX: number, relativeY: number): void
-  getPanelState(): Promise<{ expanded: boolean; visible: boolean; interval: FloatPreferences['interval'] }>
+  getPanelState(): Promise<{ expanded: boolean; visible: boolean; interval: FloatPreferences['interval']; coin: string }>
   onPanelActivity(listener: (activity: PanelActivity) => void): () => void
   getSettings(): Promise<FloatSettings>
   updateSettings(change: SettingChange): Promise<FloatSettings>

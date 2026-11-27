@@ -3,16 +3,19 @@ import { computed, defineAsyncComponent, onErrorCaptured, onMounted, onUnmounted
 import CompactTrigger from './CompactTrigger.vue'
 import { useMarket } from './market/useMarket'
 import { intervals, type Interval } from '../../shared/settings'
+import { formatLocalTime, formatPrice, priceDecimals } from './market/format'
 
 const CandleChart = defineAsyncComponent(() => import('./CandleChart.vue'))
-const props = defineProps<{ initialExpanded: boolean; initialInterval: Interval; visibility: Ref<boolean | undefined> }>()
+const props = defineProps<{ initialExpanded: boolean; initialInterval: Interval; initialCoin: string; visibility: Ref<boolean | undefined> }>()
+const coin = ref(props.initialCoin)
 const expanded = ref(props.initialExpanded)
 const chartActive = computed(() => expanded.value && Boolean(props.visibility.value))
-const { quote, history, status, candlesDelayed, restart, retryNow, syncHistory } = useMarket(chartActive, props.initialInterval)
+const { quote, history, status, candlesDelayed, restart, retryNow, syncHistory } = useMarket(chartActive, props.initialInterval, coin)
 const { interval, rows, state, revision } = history
 const currentBar = computed(() => rows.value.at(-1))
 const chartFailed = ref(false)
 let unsubscribe: (() => void) | undefined
+let unsubscribeSettings: (() => void) | undefined
 let resizing = false
 
 async function resize(open: boolean) {
@@ -33,9 +36,16 @@ onMounted(() => {
   unsubscribe = window.btcFloat.onPanelActivity(activity => {
     if (activity === 'resume') restart()
   })
+  unsubscribeSettings = window.btcFloat.onSettingsChanged(settings => {
+    if (coin.value !== settings.coin) {
+      chartFailed.value = false
+      coin.value = settings.coin
+    }
+  })
 })
 onUnmounted(() => {
   unsubscribe?.()
+  unsubscribeSettings?.()
   window.removeEventListener('keydown', escape)
 })
 onErrorCaptured(error => {
@@ -44,17 +54,22 @@ onErrorCaptured(error => {
   chartFailed.value = true
   return false
 })
-const priceFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const precision = computed(() => {
+  let decimals = priceDecimals(quote.value?.price ?? 0)
+  for (const bar of rows.value) {
+    decimals = Math.max(decimals, ...[bar.open, bar.high, bar.low, bar.close].map(priceDecimals))
+  }
+  return decimals
+})
 const percentFormat = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'exceptZero'
 })
 const label = computed(() => ({
   live: '24h', connecting: '连接中', delayed: '行情延迟', reconnecting: '重连中', offline: '已离线'
 })[status.value])
-const timeFormat = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-const quoteTitle = computed(() => quote.value ? `最近报价时间：${timeFormat.format(quote.value.time)}（本地时间）` : '暂未收到报价')
-const displayedPrice = computed(() => quote.value ? Number(quote.value.price.toFixed(2)) : undefined)
-const price = computed(() => displayedPrice.value === undefined ? '—' : priceFormat.format(displayedPrice.value))
+const quoteTitle = computed(() => quote.value ? `最近报价时间：${formatLocalTime(quote.value.time)}（本地时间）` : '暂未收到报价')
+const displayedPrice = computed(() => quote.value?.price)
+const price = computed(() => displayedPrice.value === undefined ? '—' : formatPrice(displayedPrice.value))
 const priceDirection = ref('')
 watch(displayedPrice, (current, previous) => {
   priceDirection.value = current === undefined || previous === undefined ? '' : current > previous ? 'up' : 'down'
@@ -79,10 +94,12 @@ function closeWindow(): void {
 </script>
 
 <template>
-  <main v-if="!expanded" class="widget" aria-label="BTC 行情浮窗">
+  <main v-if="!expanded" class="widget" :aria-label="coin + ' 行情浮窗'">
     <div class="quote">
-      <div class="symbol"><strong>BTC</strong><span>/ USDT</span></div>
-      <div :key="price" class="price" :class="priceDirection" :aria-label="quote ? '最新价格 ' + price + ' USDT' : '价格暂无数据'">
+      <div class="symbol"><strong :title="coin">{{ coin }}</strong><span>/ USDT</span></div>
+      <div :key="price" class="price" :class="priceDirection"
+        :style="{ fontSize: price.length > 13 ? '10px' : price.length > 11 ? '12px' : undefined }"
+        :aria-label="quote ? '最新价格 ' + price + ' USDT' : '价格暂无数据'">
         {{ price }}
       </div>
     </div>
@@ -93,9 +110,9 @@ function closeWindow(): void {
     <CompactTrigger @expand="resize(true)" />
     <button class="close" type="button" aria-label="隐藏浮窗" title="隐藏到系统托盘" @click="closeWindow">×</button>
   </main>
-  <main v-else class="detail" aria-label="BTC 行情详情">
+  <main v-else class="detail" :aria-label="coin + ' 行情详情'">
     <header class="detail-head">
-      <div class="symbol"><strong>BTC</strong><span>/ USDT 永续</span></div>
+      <div class="symbol"><strong>{{ coin }}</strong><span>/ USDT 永续</span></div>
       <div class="detail-controls">
         <span v-if="status !== 'live'" class="status warning" role="status" :title="quoteTitle">{{ label }}</span>
         <button v-if="status === 'reconnecting' || status === 'delayed'" type="button" @click="retryNow">重连</button>
@@ -106,12 +123,12 @@ function closeWindow(): void {
         <span class="change" :class="changeDirection">24h {{ change }}</span>
       </div>
       <div class="extremes">
-        <span>本根高 <b>{{ currentBar ? priceFormat.format(currentBar.high) : '—' }}</b></span>
-        <span>本根低 <b>{{ currentBar ? priceFormat.format(currentBar.low) : '—' }}</b></span>
+        <span>本根高 <b>{{ currentBar ? formatPrice(currentBar.high) : '—' }}</b></span>
+        <span>本根低 <b>{{ currentBar ? formatPrice(currentBar.low) : '—' }}</b></span>
       </div>
     </header>
     <section class="plot" aria-label="K 线图">
-      <CandleChart v-if="chartActive && !chartFailed" :rows="rows" :revision="revision" :interval="interval" />
+      <CandleChart v-if="chartActive && !chartFailed" :key="coin" :coin="coin" :rows="rows" :revision="revision" :interval="interval" :precision="precision" />
       <div v-if="plotMessage" class="plot-status" :class="{ inline: rows.length && !chartFailed }" role="status">
         <span>{{ plotMessage }}</span>
         <button v-if="chartFailed" type="button" @click="chartFailed = false">重试</button>
@@ -121,7 +138,7 @@ function closeWindow(): void {
     <footer class="periods" aria-label="K 线周期">
       <button v-for="period in intervals" :key="period" type="button" :aria-pressed="period === interval"
         @click="history.select(period)">{{ period }}</button>
-      <span title="图表时间使用协调世界时">UTC</span>
+      <span title="图表使用系统本地时间">{{ currentBar ? formatLocalTime(currentBar.time * 1000) : '本地时间' }}</span>
     </footer>
   </main>
 </template>

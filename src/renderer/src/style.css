@@ -38,6 +38,10 @@ button:focus-visible { outline: 1px solid #9faab5; outline-offset: -2px; }
 .symbol, .summary { font-size: 10px; line-height: 13px; }
 .symbol { display: flex; gap: 4px; align-items: baseline; }
 .symbol strong { letter-spacing: .5px; }
+.widget .quote { min-width: 0; margin-right: 4px; }
+.widget .symbol strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.widget .symbol span, .widget .summary { flex-shrink: 0; }
+.widget .price { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .symbol span, .change { color: #89929b; }
 .price { font-size: 14px; line-height: 17px; font-weight: 600; }
 .change.up { color: var(--rise); }

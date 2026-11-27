@@ -1,5 +1,5 @@
-import { onMounted, onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
-import { binance } from './binance'
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
+import { createBinance } from './binance'
 import { createCandleHistory } from './candleHistory'
 import type { Interval, MarketSource, MarketStream, Quote } from './source'
 
@@ -8,7 +8,8 @@ const staleAfter = 10_000
 const retryAfterSilence = 30_000
 const restInterval = 30_000
 
-export function useMarket(chartActive: Readonly<Ref<boolean>>, initialInterval: Interval, source: MarketSource = binance) {
+export function useMarket(chartActive: Readonly<Ref<boolean>>, initialInterval: Interval, coin: Readonly<Ref<string>>) {
+  const source = computed<MarketSource>(() => createBinance(coin.value))
   const quote = shallowRef<Quote | null>(null)
   const history = createCandleHistory(source, initialInterval)
   const status = ref<Status>('connecting')
@@ -42,7 +43,7 @@ export function useMarket(chartActive: Readonly<Ref<boolean>>, initialInterval: 
     request = controller
     lastQuoteRest = Date.now()
     try {
-      const update = await source.getQuote(controller.signal)
+      const update = await source.value.getQuote(controller.signal)
       if (!controller.signal.aborted) accept(update)
     } catch {
       // 保留上次报价，等待推送或下一轮 REST。
@@ -140,7 +141,7 @@ export function useMarket(chartActive: Readonly<Ref<boolean>>, initialInterval: 
     openedAt = candleWatchStarted = Date.now()
     lastQuoteAt = lastQuoteEvent = lastCandleAt = 0
     try {
-      const connection = source.subscribe(update => {
+      const connection = source.value.subscribe(update => {
         const now = Date.now()
         if (generation !== current || update.time <= lastQuoteEvent || now - update.time >= staleAfter) return
         if (!lastQuoteAt && attempts > 0 && chartActive.value) syncHistory()
@@ -208,6 +209,15 @@ export function useMarket(chartActive: Readonly<Ref<boolean>>, initialInterval: 
     checkHealth()
   })
   watch(history.state, checkHealth)
+  watch(coin, () => {
+    clearTransport()
+    cancelRequests()
+    quote.value = null
+    history.reset()
+    needsInitialHistory = true
+    lastQuoteRest = lastHistoryRest = lastManualRetry = -Infinity
+    restart()
+  }, { flush: 'sync' })
 
   onMounted(() => {
     started = true

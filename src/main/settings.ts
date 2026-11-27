@@ -2,7 +2,7 @@ import { app } from 'electron'
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  defaultPreferences, intervals, opacityOptions,
+  defaultPreferences, intervals, opacityOptions, isCoin,
   type FloatPreferences, type FloatSettings, type SettingChange,
 } from '../shared/settings'
 
@@ -12,6 +12,7 @@ function normalize(raw: unknown): FloatPreferences {
     alwaysOnTop: typeof value.alwaysOnTop === 'boolean' ? value.alwaysOnTop : defaultPreferences.alwaysOnTop,
     opacity: value.opacity !== undefined && opacityOptions.includes(value.opacity) ? value.opacity : defaultPreferences.opacity,
     interval: value.interval !== undefined && intervals.includes(value.interval) ? value.interval : defaultPreferences.interval,
+    coin: isCoin(value.coin) ? value.coin : defaultPreferences.coin,
     startExpanded: typeof value.startExpanded === 'boolean' ? value.startExpanded : defaultPreferences.startExpanded,
   }
 }

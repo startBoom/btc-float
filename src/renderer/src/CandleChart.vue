@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { CandlestickSeries, ColorType, createChart, type IChartApi, type ISeriesApi, type UTCTimestamp } from 'lightweight-charts'
+import { CandlestickSeries, ColorType, createChart, type IChartApi, type ISeriesApi, type Time, type UTCTimestamp } from 'lightweight-charts'
 import type { Candle, Interval } from './market/source'
+import { formatLocalTime } from './market/format'
 
-const props = defineProps<{ rows: Candle[]; revision: number; interval: Interval }>()
+const props = defineProps<{ rows: Candle[]; revision: number; interval: Interval; coin: string; precision: number }>()
 const host = ref<HTMLDivElement>()
 let chart: IChartApi | undefined
 let series: ISeriesApi<'Candlestick'> | undefined
@@ -50,19 +51,28 @@ onMounted(() => {
       fontFamily: '"Segoe UI", sans-serif', fontSize: 10, attributionLogo: true },
     grid: { vertLines: { visible: false }, horzLines: { color: '#272d33' } },
     rightPriceScale: { borderVisible: false },
-    timeScale: { timeVisible: true, secondsVisible: false, borderVisible: false },
-    localization: { locale: 'zh-CN' }
+    timeScale: {
+      timeVisible: true, secondsVisible: false, borderVisible: false, tickMarkMaxCharacterLength: 16,
+      tickMarkFormatter: (time: Time) => typeof time === 'number' ? formatLocalTime(time * 1000) : null
+    },
+    localization: {
+      locale: 'zh-CN',
+      timeFormatter: (time: Time) => typeof time === 'number' ? formatLocalTime(time * 1000) : String(time)
+    }
   })
   series = chart.addSeries(CandlestickSeries, {
     upColor: rise, downColor: fall, wickUpColor: rise, wickDownColor: fall,
-    borderVisible: false, priceLineWidth: 1, priceFormat: { type: 'price', precision: 2, minMove: 0.01 }
+    borderVisible: false, priceLineWidth: 1, priceFormat: { type: 'price', precision: props.precision, minMove: 10 ** -props.precision }
   })
   render()
 })
 watch([() => props.rows, () => props.revision, () => props.interval], render)
+watch(() => props.precision, precision => series?.applyOptions({
+  priceFormat: { type: 'price', precision, minMove: 10 ** -precision }
+}))
 onUnmounted(() => chart?.remove())
 </script>
 
 <template>
-  <div ref="host" class="chart-host" role="img" :aria-label="'BTCUSDT ' + interval + ' 蜡烛图，时间为 UTC'" />
+  <div ref="host" class="chart-host" role="img" :aria-label="coin + 'USDT ' + interval + ' 蜡烛图，时间为本地时间'" />
 </template>

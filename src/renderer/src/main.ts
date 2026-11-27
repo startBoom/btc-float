@@ -10,9 +10,9 @@ if (location.hash === '#settings') {
   const unsubscribe = window.btcFloat.onPanelActivity(activity => {
     if (activity !== 'resume') visibility.value = activity === 'shown'
   })
-  void window.btcFloat.getPanelState().then(({ expanded, visible, interval }) => {
+  void window.btcFloat.getPanelState().then(({ expanded, visible, interval, coin }) => {
     visibility.value ??= visible
-    const app = createApp(App, { initialExpanded: expanded, initialInterval: interval, visibility })
+    const app = createApp(App, { initialExpanded: expanded, initialInterval: interval, initialCoin: coin, visibility })
     app.onUnmount(unsubscribe)
     app.mount('#app')
   }).catch((error: unknown) => {

@@ -48,6 +48,7 @@ function updateSettings(change: unknown) {
   applyPreferences(current);
   tray.refresh(current);
   settingsWindow?.webContents.send(settingsChangedChannel, current);
+  panel?.webContents.send(settingsChangedChannel, current);
   return current;
 }
 
@@ -69,7 +70,7 @@ async function openSettings(): Promise<void> {
   const win = new BrowserWindow({
     title: 'BTC Float 设置',
     width: 370,
-    height: 390,
+    height: 430,
     useContentSize: true,
     autoHideMenuBar: true,
     backgroundColor: '#191d22',
@@ -245,7 +246,8 @@ if (!app.requestSingleInstanceLock()) {
       ipcMain.handle(getPanelStateChannel, (event) => {
         if (!panel || event.senderFrame !== panel.webContents.mainFrame)
           throw new Error('无权读取浮窗状态');
-        return { expanded: Boolean(compactBounds), visible: panel.isVisible(), interval: settings.get().interval };
+        const preferences = settings.get();
+        return { expanded: Boolean(compactBounds), visible: panel.isVisible(), interval: preferences.interval, coin: preferences.coin };
       });
       ipcMain.handle(getSettingsChannel, (event) => {
         if (!settingsWindow || event.senderFrame !== settingsWindow.webContents.mainFrame)

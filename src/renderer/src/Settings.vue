@@ -1,12 +1,24 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, shallowRef, ref } from 'vue'
-import { intervals, opacityOptions, type FloatSettings, type SettingChange } from '../../shared/settings'
+import { intervals, opacityOptions, popularCoins, isCoin, type FloatSettings, type SettingChange } from '../../shared/settings'
 
 const settings = shallowRef<FloatSettings>()
 const busy = ref(false)
 const error = ref('')
 const formRevision = ref(0)
 let unsubscribe: (() => void) | undefined
+
+function saveCoin(event: Event) {
+  const input = event.target as HTMLInputElement
+  const coin = input.value.trim().toUpperCase()
+  if (!isCoin(coin)) {
+    error.value = '请输入有效的币种代码，例如 BTC、ETH 或 SOL。'
+    input.value = settings.value?.coin ?? 'BTC'
+    return
+  }
+  input.value = coin
+  if (coin !== settings.value?.coin) void save({ key: 'coin', value: coin })
+}
 
 async function load() {
   try {
@@ -61,6 +73,14 @@ onUnmounted(() => unsubscribe?.())
         </select>
       </label>
       <label>
+        <span>币种</span>
+        <input class="coin-input" type="text" list="coins" maxlength="20" :value="settings.coin"
+          placeholder="BTC" title="请输入 Binance USDT 永续合约的币种代码" @change="saveCoin" @keydown.enter="($event.target as HTMLInputElement).blur()" />
+        <datalist id="coins">
+          <option v-for="coin in popularCoins" :key="coin" :value="coin" />
+        </datalist>
+      </label>
+      <label>
         <span>默认 K 线周期</span>
         <select :value="settings.interval"
           @change="save({ key: 'interval', value: ($event.target as HTMLSelectElement).value as FloatSettings['interval'] })">
@@ -77,11 +97,11 @@ onUnmounted(() => unsubscribe?.())
       </label>
     </fieldset>
     <dl v-if="settings">
-      <div><dt>行情源</dt><dd>Binance BTCUSDT 永续</dd></div>
+      <div><dt>行情源</dt><dd>Binance {{ settings.coin }}USDT 永续</dd></div>
       <div><dt>计价货币</dt><dd>USDT</dd></div>
     </dl>
     <p v-if="error" role="alert">{{ error }} <button v-if="!settings" type="button" @click="load">重新读取</button></p>
-    <p v-else role="status">{{ !settings ? '正在读取设置…' : busy ? '正在保存…' : '设置自动保存，默认周期和视图下次启动时生效。' }}</p>
+    <p v-else role="status">{{ !settings ? '正在读取设置…' : busy ? '正在保存…' : '币种自动保存并立即切换，默认周期和视图下次启动时生效。' }}</p>
   </main>
 </template>
 
@@ -106,7 +126,8 @@ label, dl div {
   border-bottom: 1px solid #303740;
 }
 input, select, button { font: inherit; accent-color: #a4b7c8; }
-select, button { padding: 3px 5px; color: inherit; background: #262d35; border: 1px solid #434e59; border-radius: 4px; }
+select, button, .coin-input { padding: 3px 5px; color: inherit; background: #262d35; border: 1px solid #434e59; border-radius: 4px; }
+.coin-input { width: 120px; text-transform: uppercase; }
 dl, dd { margin: 0; }
 dd, p { color: #a6afb8; }
 p { margin: 12px 0 0; font-size: 11px; }
